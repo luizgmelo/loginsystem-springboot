@@ -1,5 +1,6 @@
 package br.com.luizgmelo.loginsystem.controllers;
 
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.luizgmelo.loginsystem.dtos.UserDto;
+import br.com.luizgmelo.loginsystem.dtos.LoginRegisterRequestDTO;
+import br.com.luizgmelo.loginsystem.dtos.ResponseDto;
+import br.com.luizgmelo.loginsystem.dtos.LoginRegisterRequestDTO;
 import br.com.luizgmelo.loginsystem.dtos.UserResponseDto;
 import br.com.luizgmelo.loginsystem.models.User;
 import br.com.luizgmelo.loginsystem.services.UserService;
@@ -22,14 +25,18 @@ public class AuthenticationController {
   UserService userService;
 
   @PostMapping("/register")
-  public ResponseEntity<UserResponseDto> register(@RequestBody @Valid UserDto userDto) {
-    User user = userService.register(userDto);
-    UserResponseDto response = new UserResponseDto(user.getUsername());
-    return ResponseEntity.status(HttpStatus.OK).body(response);
+  public ResponseEntity register(@RequestBody @Valid LoginRegisterRequestDTO body) {
+    String token = userService.register(body);
+    if (token == null)
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    return ResponseEntity.status(HttpStatus.OK).body(new ResponseDto(body.username(), token));
   }
 
-  @GetMapping("/users")
-  public User getAll(@RequestBody UserResponseDto user) {
-    return userService.getAll(user.username());
+  @PostMapping("/login")
+  public ResponseEntity login(@RequestBody @Valid LoginRegisterRequestDTO body) {
+    String token = userService.loginAcess(body);
+    if (token == null)
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Wrong username or password!");
+    return ResponseEntity.status(HttpStatus.OK).body(new ResponseDto(body.username(), token));
   }
 }
